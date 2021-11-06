@@ -1,0 +1,13 @@
+name = "JuliaProgrammingPuzzles"
+uuid = "6f640412-edef-4056-a19e-f32df3035bb3"
+authors = ["Sumantrak Mukherjee", "Zenna Tavares"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
