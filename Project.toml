@@ -1,0 +1,7 @@
+name = "JuliaProgrammingPuzzles"
+uuid = "adc7a89d-a78b-4cf6-bbee-0eb0dd25b4e7"
+authors = ["Zenna Tavares <zennatavares@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
