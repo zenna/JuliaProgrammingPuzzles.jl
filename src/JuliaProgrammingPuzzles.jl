@@ -11,7 +11,7 @@ export all_problems,
        ProgrammaticSolutions,
        issol
 
-issol(solution, problem) = problem(solution) == true # Yes, I know..
+issol(solution::Tuple, problem) = problem(solution...) == true # Yes, I know..
 
 "All JuliaProgrammingPuzzles"
 # subtypes(AbstractProblem)
