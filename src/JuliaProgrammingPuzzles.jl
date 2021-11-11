@@ -23,7 +23,7 @@ all_problems() = [study_1_sat, study_2_sat, simple_real_1]
 
 # Solutions
 struct ProgrammaticSolutions end
-solve(f, s::ProgrammaticSolutions) = solves(f)()
+solve(f, s::ProgrammaticSolutions) = (solves(f)(),)
 include("study_sol.jl")
 
 # Evaluation
