@@ -1,3 +1,4 @@
+using Base: Char
 function sat_study1(s::String)
     """Find a string with 1000 'o's but no two adjacent 'o's."""
     return count(s,"o") == 1000 && return count(s, "oo") == 0
@@ -233,16 +234,16 @@ function sol_study21()
     return "abacadaeaaaaaaaaaa"
 end
 
-function sat_study22(ls::Array{String})
+function sat_study22(ls::Tuple{Char, Char, Char})
     """
     Find a list of characters which are aligned at the same indices of the three strings 'dee', 'doo', and 'dah!'.
     """
-    return tuple(ls) in zip("dee", "doo", "dah!")
+    return ls in zip("dee", "doo", "dah!")
 end
 
 function sol_study22()
     """Needs to be filled in with logic hardcoded it for now"""
-    return ['d', 'd', 'd']
+    return ('d', 'd', 'd')
 end
 
 function sat_study23(li::Array{Int64})
