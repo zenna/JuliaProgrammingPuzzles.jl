@@ -56,3 +56,56 @@ function sol_SeparateParenGroups(combined)
 end
 # solves(::typeof(sat_SeparateParenGroups)) = sol_SeparateParenGroups
 
+"""
+    Given a floating point number, find its fractional part.
+    Sample Input:
+    4.175
+    Sample Output:
+    0.175
+"""
+function sat_Frac(x::Float64, v=523.12892)
+    (0 <= x < 1) & isinteger(v - x)
+end
+
+sol_Frac(v) = v % 1.0
+# solves(::typeof(sat_Frac)) = sol_Frac
+
+"""
+    Given a list of numbers which represent bank deposits and withdrawals, find the *first* negative balance.
+    Sample Input:
+    [[12, -5, 3, -99, 14, 88, -99], [-1, 2, 5]]
+    Sample Output:
+    [-89, -1]
+"""
+function sat_FirstNegCumulative(firsts::Array{Int64, 1}, balances=[[2, 7, -2, 4, 3, -15, 10, -45, 3], [3, 4, -17, -1], [100, -100, -101], [-1]])
+    i = 1
+    for bals in balances
+        total = 0
+        for b in bals
+            total += b
+            if total < 0
+                @assert total == firsts[i]
+                break
+            end
+        end
+        i += 1
+    end
+    return true
+end
+
+function sol_FirstNegCumulative(balances)
+    firsts::Array{Int64, 1} = []
+    for bals in balances
+        total = 0
+        for b in bals
+            total += b
+            if total < 0
+                push!(firsts, total)
+                break
+            end
+        end
+    end
+    firsts
+end
+# solves(::typeof(sat_FirstNegCumulative)) = sol_FirstNegCumulative
+
