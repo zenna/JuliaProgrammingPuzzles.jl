@@ -197,3 +197,86 @@ function sol_DeepestParens(parens = "() (()) ((()()())) (((((((())))))))")
 end
 solves(::typeof(sat_DeepestParens)) = sol_DeepestParens
 
+"""
+    Find the strings in a list containing a given substring
+    Sample Input:
+    ['cat', 'dog', 'bear'], 'a'
+    Sample Output:
+    ['cat', 'bear']
+"""
+function sat_FindContainers(containers::Array{String, 1}, strings=["cat", "dog", "shatter", "bear", "at", "ta"], substring="at")
+    i = 1
+    for s in strings
+        if occursin(substring, s)
+            @assert containers[i] == s
+            i += 1
+        end
+    end
+    i == (length(containers) + 1)
+end
+
+function sol_FindContainers(strings, substring)
+    [s for s in strings if occursin(substring, s)]
+end
+solves(::typeof(sat_FindContainers)) = sol_FindContainers
+
+"""
+    Find a list of numbers with a given sum and a given product.
+    Sample Input:
+    12, 32
+    Sample Output:
+    [2, 8, 2]
+"""
+function sat_SumProduct(nums::Array{Int64, 1}, tot=14, prod=99)
+    @assert sum(nums) == tot
+    p = 1
+    for n in nums
+        p *= n
+    end
+    p == prod
+end
+
+function sol_SumProduct(tot, prod)
+    ans = [prod]
+    while sum(ans) > tot
+        ans = vcat(ans, [-1, -1])
+    end
+    ans = vcat(ans, ones(Int64, tot - sum(ans)))
+    ans
+end
+solves(::typeof(sat_SumProduct)) = sol_SumProduct
+
+"""
+    Find a list whose ith element is the maximum of the first i elements of the input list.
+    Sample Input:
+    [2, 8, 2]
+    Sample Output:
+    [2, 8, 8]
+"""
+function sat_RollingMax(maxes::Array{Int64, 1}, nums=[1, 4, 3, -6, 19])
+    @assert length(maxes) == length(nums)
+    for i in 1:length(nums)
+        if i > 1
+            @assert maxes[i] == max(maxes[i - 1], nums[i])
+        else
+            @assert maxes[1] == nums[1]
+        end
+    end
+    true
+end
+
+sol_RollingMax(nums) = [maximum(nums[1:i]) for i in 1:length(nums)]
+
+function sol2_RollingMax(nums)
+    ans = []
+    m = nums[1]
+    for n in nums
+        m = max(n, m)
+        push!(ans, m)
+    end
+    ans
+end
+
+# Sol2?
+solves(::typeof(sat_RollingMax)) = sol_RollingMax
+
