@@ -109,3 +109,91 @@ function sol_FirstNegCumulative(balances)
 end
 # solves(::typeof(sat_FirstNegCumulative)) = sol_FirstNegCumulative
 
+"""
+    Given a list of numbers, find x that minimizes mean squared deviation.
+    Sample Input:
+    [4, -5, 17, -9, 14, 108, -9]
+    Sample Output:
+    17.14285
+"""
+function sat_MinSquaredDeviation(x::Float64, nums=[12, -2, 14, 3, -15, 10, -45, 3, 30])
+    (sum([(n - x) ^ 2 for n in nums]) * length(nums)) <= sum((m - n) ^ 2 for m in nums for n in nums) * 0.5 + 1e-4
+end
+
+function sol_MinSquaredDeviation(nums = [12, -2, 14, 3, -15, 10, -45, 3, 30])
+    sum(nums) / length(nums)
+end
+solves(::typeof(sat_MinSquaredDeviation)) = sol_MinSquaredDeviation
+
+"""
+    Given a list of numbers and a number to inject, create a list containing that number in between each pair of
+    adjacent numbers.
+    Sample Input:
+    [8, 14, 21, 17, 9, -5], 3
+    Sample Output:
+    [8, 3, 14, 3, 21, 3, 17, 3, 9, 3, -5]
+"""
+function sat_Intersperse(li::Array{Int64, 1}, nums=[12, 23, -2, 5, 0], sep=4)
+    (li[1:2:end] == nums) & (li[2:2:end] == sep .* ones(Int64, (length(nums) - 1)))
+end
+
+function sol_Intersperse(nums, sep)
+    ans = sep .* ones(Int64, (2 * length(nums) - 1))
+    ans[1:2:end] = nums
+    ans
+end
+solves(::typeof(sat_Intersperse)) = sol_Intersperse
+
+"""
+    Given a string consisting of groups of matched nested parentheses separated by parentheses,
+    compute the depth of each group.
+    Sample Input:
+    '(()) ((()()())) (()) ()'
+    Sample Output:
+    [2, 3, 2, 1]
+"""
+function sat_DeepestParens(depths::Array{Int64, 1}, parens="() (()) ((()()())) (((((((())))))))")
+    groups = split(parens)
+    for dg in zip(depths, groups)
+        depth, group = dg
+        budget = depth
+        success = false
+        for c in group
+            if c == '('
+                budget -= 1
+                if budget == 0
+                    success = true
+                end
+                @assert budget >= 0
+            else
+                # @show success
+                @assert c == ')'
+                budget += 1
+            end
+        end
+        @assert success
+    end
+    length(groups) == length(depths)
+end
+
+    
+function sol_DeepestParens(parens = "() (()) ((()()())) (((((((())))))))")
+    function max_depth(s)
+        m = 0
+        depth = 0
+        for c in s
+            if c == '('
+                depth += 1
+                m = max(m, depth)
+            else
+                @assert c == ')'
+                depth -= 1
+            end
+        end
+        @assert depth == 0
+        m
+    end
+    [max_depth(s) for s in split(parens)]
+end
+solves(::typeof(sat_DeepestParens)) = sol_DeepestParens
+
