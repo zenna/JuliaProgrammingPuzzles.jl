@@ -1,19 +1,13 @@
 """
-Inspired by
-[ICPC 2019 Problem A: Azulejos](https://icpc.global/worldfinals/problems/2019%20ACM-ICPC%20World%20Finals/icpc2019.pdf)
-which is 2,287 characters.
+    There are two rows of objects. Given the length-n integer arrays of prices and heights of objects in each
+    row, find a permutation of both rows so that the permuted prices are non-decreasing in each row and
+    so that the first row is taller than the second row.
 """
-
-function sat_BiPermutations(perms::Array{Array{Int64}},
+function sat_BiPermutations(perms::Array{Array{Int64, 1}, 1},
     prices0::Array{Int64}=[7, 7, 9, 5, 3, 7, 1, 2],
     prices1::Array{Int64}=[5, 5, 5, 4, 2, 5, 1, 1],
     heights0::Array{Int64}=[2, 4, 9, 3, 8, 5, 5, 4],
     heights1::Array{Int64}=[1, 3, 8, 1, 5, 4, 4, 2])
-    """
-    There are two rows of objects. Given the length-n integer arrays of prices and heights of objects in each
-    row, find a permutation of both rows so that the permuted prices are non-decreasing in each row and
-    so that the first row is taller than the second row.
-    """
     n = length(prices0)
     (perm0, perm1) = perms
     @assert sort(perm0) == sort(perm1) == [i for i in 1:n] "Solution must be two permutations"
@@ -24,10 +18,10 @@ function sat_BiPermutations(perms::Array{Array{Int64}},
     return all(heights0[i]>heights1[j] for (i,j) in zip(perm0, perm1))
 end
 
-function sol_BiPermutation(prices0::Int64, prices1::Int64, heights0::Int64, heights1::Int64)
-    n = length(prices)
-    prices = [prices0,prices1]
-    orders = [[x for (_,x) in zip(sort((prices0[i], heights0[i]) for i in 1:n), 1:n)],[x for (_,x) in zip(sort((prices0[i], -heights0[i]) for i in 1:n), 1:n)]]
+function sol_BiPermutations(prices0::Vector{Int64}, prices1::Vector{Int64}, heights0::Vector{Int64}, heights1::Vector{Int64})
+    prices = [prices0, prices1]
+    n = length(prices0)
+    orders = [sortperm([(prices0[i], heights0[i]) for i in 1:n]), sortperm([(prices0[i], - heights0[i]) for i in 1:n])]
     jumps = [1,1] # next price increase locations
     for i in 1:n
         for (r,(p,o)) in enumerate(zip(prices, orders))
@@ -36,7 +30,7 @@ function sol_BiPermutation(prices0::Int64, prices1::Int64, heights0::Int64, heig
             end
         end
 
-        to_fix = orders[jumps[0] < jumps[1]]
+        to_fix = orders[Int(jumps[1] < jumps[2]) + 1]
         j = i
         while heights0[orders[1][i]] <= heights1[orders[2][i]]
             j+=1
@@ -45,18 +39,28 @@ function sol_BiPermutation(prices0::Int64, prices1::Int64, heights0::Int64, heig
     end
     return orders
 end
+solves(::typeof(sat_BiPermutations)) = sol_BiPermutations
 
-function gen_random_BiPermutation()
-    return
+function gen_random(::typeof(sat_BiPermutations), rng)
+    n = rand(rng, 2 : rand(rng, [10, 20, 100]))
+    P = sort(rand(rng, 0:round(Int64, n / 10), n))  # non-decreasing prices
+    H = [rand(rng, 1:10) for _ in 1:n]
+    perm1 = collect(1:n)
+    perm1 = shuffle(rng, perm1)
+    prices1 = Int64[P[i] for i in perm1]
+    heights1 = Int64[H[i] for i in perm1]
+
+    P = sort(rand(rng, 0:round(Int64, n / 10), n))  # non-decreasing prices
+    H = [h + rand(rng, 1:5) for h in H]  # second row taller than first
+    perm0 = collect(1:n)
+    perm0 = shuffle(rng, perm0)
+    prices0 = Int64[P[i] for i in perm0]
+    heights0 = Int64[H[i] for i in perm0]
+    (prices0, heights0, prices1, heights1)
 end
 
+
 """
-Inspired by
-[ICPC 2019 Problem B: Bridges](https://icpc.global/worldfinals/problems/2019%20ACM-ICPC%20World%20Finals/icpc2019.pdf)
-which is 3,003 characters.
-"""
-function sat_OptimalBridges(indices::Array{Int64}, H::Int64=60, alpha::Int64=18, b::Int64=2, xs::Array{Int64}=[0, 10, 20, 30, 50, 80, 100, 120, 160, 190, 200], ys::Array{Int64}=[0, 30, 10, 30, 50, 40, 10, 20, 20, 55, 10], thresh::Int64=26020)
-    """
     You are to choose locations for bridge bases from among a given set of mountain peaks located at
     `xs, ys`, where `xs` and `ys` are lists of n integers of the same length. Your answer should be a sorted
     list of indices starting at 0 and ending at n-1. The goal is to minimize building costs such that the bridges
@@ -68,9 +72,10 @@ function sat_OptimalBridges(indices::Array{Int64}, H::Int64=60, alpha::Int64=18,
     peak. See the code for how this is determined mathematically.
     * The total cost of all the bridges must be at most `thresh`, where the cost is parameter alpha * (the sum of
     all pillar heights) + beta * (the sum of the squared diameters)
-    """
+"""
+function sat_OptimalBridges(indices::Array{Int64}, H::Int64=60, alpha::Int64=18, b::Int64=2, xs::Array{Int64}=[0, 10, 20, 30, 50, 80, 100, 120, 160, 190, 200], ys::Array{Int64}=[0, 30, 10, 30, 50, 40, 10, 20, 20, 55, 10], thresh::Int64=26020)
     @assert sort!(collect(Set([[0, length(xs)-1]; indices]))) == indices "Ans. should be sorted list [0, ..., {len(xs) - 1}]"
-    cost = alpha * (H - ys[0])
+    cost = alpha * (H - ys[1])
     for (i,j) in zip(indices, indices[2:length(indices)])
         (a,b,r) = xs[i],xs[j], (xs[j]-xs[i])/2
         @assert max(ys[i], ys[j]) + r <= H "Bridge too tall"
@@ -114,24 +119,55 @@ function sol_OptimalBridges(H, alpha, beta, xs, ys, thresh)
         end
     end
     rev_ans = [n-1]
-    while rev_ans[length(rev_ans)-1] != 0
-        append!(rev_ans, prior[rev_ans[length(rev_ans)-1]])
+    while rev_ans[end] != 0
+        append!(rev_ans, prior[rev_ans[end]])
     end
     return rev_ans[length(rev_ans):-1:1]
 end
+solves(::typeof(sat_OptimalBridges)) = sol_OptimalBridges
 
-function gen_random_OptimalBridges()
-    return
+function gen_random(::typeof(sat_OptimalBridges), rng)
+    H = 10 ^ 5
+    L = rand(rng, [10, 20, 50, 100, 1000])
+    n = rand(rng, 2:L)
+    alpha = rand(rng, 0:L)
+    beta = rand(rng, 0:L)
+    m = rand(rng, 1:n)
+    keys = [0] + sort(rand(rng, 1:H, m - 1)) + [H]
+    @assert length(keys) == m + 1
+    dists = [keys[i + 1] - keys[i] for i in 1:m]
+    @assert len(dists) == m
+    heights = [rand(rng, 0:(H - round(Int64, max([dists[max(0, i - 1)], dists[min(m - 1, i)]]) + 1) / 2)) for i in 0:m]
+    xs = []
+    ys = []
+    for i in 0:m
+        append!(xs, keys[i])
+        append!(ys, heights[i])
+        for _ in 1:round(Int64, 1 / rand(rng))
+            if i >= m || (length(xs) + m + 1 - i >= L) || (xs[end] == keys[i + 1])
+                break
+            end
+            x = rand(rng, xs[-1] : keys[i + 1] - 1)
+            append!(xs, x)
+            c = (keys[i + 1] + keys[i]) / 2
+            r = (keys[i + 1] - keys[i]) / 2
+            y = self.random.rand(0, int(H - r + (r ** 2 - (x - c) ** 2) ** 0.5))
+            ys.append(y)
+        end
+    end
+    indices = OptimalBridges.sol(H, alpha, beta, xs, ys, None)  # compute min-cost, thresh is ignored
+    cost = alpha * (H - ys[0])
+    for i, j in zip(indices, indices[1:]):
+        a, b, r = xs[i], xs[j], (xs[j] - xs[i]) / 2
+        @assert max(ys[i], ys[j]) + r <= H "Bridge too tall"
+        @assert all(ys[k] <= H - r + ((b - xs[k]) * (xs[k] - a)) ** 0.5 for k in range(i + 1, j)) "Bridge too short"
+        cost += alpha * (H - ys[j]) + beta * (b - a) ** 2
+    end
+    thresh = cost
+    (H, alpha, beta, xs, ys, thresh)
 end
 
 """
-Inspired by
-[ICPC 2019 Problem C: Checks Post Facto](https://icpc.global/worldfinals/problems/2019%20ACM-ICPC%20World%20Finals/icpc2019.pdf)
-Nobody solved this problem during the competition -- it is pretty difficult!
-"""
-
-function sat_CheckersPosition(position::Array{Array{Int64}}, transcript::Array{Array{Array{Int64}}} = [[[3, 3], [5, 5], [3, 7]], [[5, 3], [6, 4]]] )
-    """
     You are given a partial transcript a checkers game. Find an initial position such that the transcript
     would be a legal set of moves. The board positions are [x, y] pairs with 0 <= x, y < 8 and x + y even.
     There are two players which we call -1 and 1 for convenience, and player 1 must move first in transcript.
@@ -143,7 +179,8 @@ function sat_CheckersPosition(position::Array{Array{Int64}}, transcript::Array{A
     * You must jump if you can, and you must continue jumping until one can't any longer.
     * You cannot start the position with any non-kings on your last rank.
     * Promotion happens after the turn ends
-    """
+"""
+function sat_CheckersPosition(position::Array{Array{Int64}}, transcript::Array{Array{Array{Int64}}} = [[[3, 3], [5, 5], [3, 7]], [[5, 3], [6, 4]]])
     board = Set([(x,y)=>0 for x in 1:8 for y in 1:8 if (x+y)%2 == 0])
     for (x,y,p) in position 
         @assert -2 <= p <= 2 && board[x,y]==0 # -1, 1 is regular piece, -2, 2 is king
