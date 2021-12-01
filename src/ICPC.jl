@@ -12,8 +12,8 @@ function sat_BiPermutations(perms::Array{Array{Int64, 1}, 1},
     (perm0, perm1) = perms
     @assert sort(perm0) == sort(perm1) == [i for i in 1:n] "Solution must be two permutations"
     for i in 1:n-1
-        @assert prices0[perm0[i]] <= prices0[perm0[i + 1]] "Permuted prices must be nondecreasing (row 0)"
-        @assert prices1[perm1[i]] <= prices1[perm1[i + 1]] "Permuted prices must be nondecreasing (row 1)"
+        @assert prices0[perm0[i]] <= prices0[perm0[i + 1]] "Permuted prices must be nondecreasing (row 1)"
+        @assert prices1[perm1[i]] <= prices1[perm1[i + 1]] "Permuted prices must be nondecreasing (row 2)"
     end
     return all(heights0[i]>heights1[j] for (i,j) in zip(perm0, perm1))
 end
@@ -21,26 +21,26 @@ end
 function sol_BiPermutations(prices0::Vector{Int64}, prices1::Vector{Int64}, heights0::Vector{Int64}, heights1::Vector{Int64})
     prices = [prices0, prices1]
     n = length(prices0)
-    orders = [sortperm([(prices0[i], heights0[i]) for i in 1:n]), sortperm([(prices0[i], - heights0[i]) for i in 1:n])]
+    orders = [sortperm([(prices0[i], heights0[i]) for i in 1:n]), sortperm([(prices1[i], - heights1[i]) for i in 1:n])]
     jumps = [1,1] # next price increase locations
     for i in 1:n
         for (r,(p,o)) in enumerate(zip(prices, orders))
-            while jumps[r] < n && p[o[jumps[r]]] == p[o[i]]
+            while jumps[r] <= n && p[o[jumps[r]]] == p[o[i]]
                 jumps[r] += 1
             end
         end
-
         to_fix = orders[Int(jumps[1] < jumps[2]) + 1]
         j = i
-        while heights0[orders[1][i]] <= heights1[orders[2][i]]
-            j+=1
-            to_fix[i],to_fix[j] =  to_fix[j],to_fix[i]
+        while (heights0[orders[1][i]] <= heights1[orders[2][i]]) && (j < n)
+            j += 1
+            to_fix[i], to_fix[j] =  to_fix[j], to_fix[i]
         end
     end
     return orders
 end
 solves(::typeof(sat_BiPermutations)) = sol_BiPermutations
 
+# gen_random generates arrays that give error in sat/sol - even in the python implementation
 function gen_random(::typeof(sat_BiPermutations), rng)
     n = rand(rng, 2 : rand(rng, [10, 20, 100]))
     P = sort(rand(rng, 0:round(Int64, n / 10), n))  # non-decreasing prices
@@ -133,7 +133,7 @@ function gen_random(::typeof(sat_OptimalBridges), rng)
     alpha = rand(rng, 0:L)
     beta = rand(rng, 0:L)
     m = rand(rng, 1:n)
-    keys = [0] + sort(rand(rng, 1:H, m - 1)) + [H]
+    keys = [0; sort(rand(rng, 1:H, m - 1)); H]
     @assert length(keys) == m + 1
     dists = [keys[i + 1] - keys[i] for i in 1:m]
     @assert len(dists) == m
@@ -191,3 +191,27 @@ function sat_CheckersPosition(position::Array{Array{Int64}}, transcript::Array{A
         p = board[x,y]
         deltas = [(dx,dy) for dx in [-1,1] for dy in [-1,1] if dy!=-p] # don't check backwards for non-kings
         return any([board[x+2*dx, y+2*dy]==0 ])
+    end
+    sign = 1  # player 1 moves first
+    for move in transcript
+        start, last = tuple(move[0]), tuple(move[-1])
+        p = board[start]  # piece to move
+        @assert p * sign > 0 "Moving square must be non-empty and players must be alternate signs"
+        @assert all(board[x, y] == 0 for (x, y) in move if [x, y] != move[0]) "Moved to an occupied square"
+        for ((x1, y1), (x2, y2)) in zip(move, move[2:end])
+            @assert abs(p) != 1 or (y2 - y1) * p > 0 "Non-kings can only move forward (in direction of sign)"
+            if abs(x2 - x1) == 1  # non-jump
+                @assert not any(has_a_jump(*a) for a in board if board[a] * p > 0) "Must make a jump if possible"
+                break
+            mid = ((x1 + x2) // 2, (y1 + y2) // 2)
+            @assert board[mid] * p < 0 "Can only jump over piece of opposite sign"
+            board[mid] = 0
+        board[start], board[last] = 0, p
+        @assert (abs(x2 - x1) == 1) || !(has_a_jump(*last))
+        if (abs(p) == 1) && (any(y in {0, 7} for (x, y) in move[2:end]))
+            board[last] *= 2  # king me at the end of turn after any jumps are done!
+        end
+        sign *= -1
+    end
+    return True
+end

@@ -1,61 +1,28 @@
-using Base: Int64
-"""Eight (or fewer) Queens Puzzle
-See Wikipedia entry on
-[Eight Queens puzzle](https://en.wikipedia.org/w/index.php?title=Eight_queens_puzzle).
-See the MoreQueens puzzle below for another (longer but clearer) equivalent definition of sat
-Hint: a brute force approach works on this puzzle.
-"""
+using Combinatorics
 
-function sat_EightQueensOrFewer(squares::Array{Array{Int64}}, m::Int64 = 8, n::Int64 = 8)
-    """Position min(m, n) <= 8 queens on an m x n chess board so that no pair is attacking each other."""
+"Position min(m, n) <= 8 queens on an m x n chess board so that no pair is attacking each other."
+function sat_EightQueensOrFewer(squares::Array{Array{Int64, 1}, 1}, m::Int64 = 8, n::Int64 = 8)
     k = min(m,n)
-    @assert all([i in 1:m && j in 1:n for (i,j) in squares]) && length(squares) == k
+    @assert all([i in 1:m && j in 1:n for (i,j) in squares]) && (length(squares) == k)
     return 4*k == length(Set([t for (i,j) in squares for t in [("row", i), ("col", j), ("SE", i + j), ("NE", i - j)]]))
 end
 
 function sol_EigthQueensOrFewer(m::Int64, n::Int64)
     # brute force
     k = min(m,n)
-    for p in permutation(1:k)
+    for p in permutations(collect(1:k))
         if 4*k == length(Set([t for (i,j) in enumerate(p) for t in [("row", i), ("col", j), ("SE", i + j), ("NE", i - j)]]))
             return [[i,j] for (i,j) in enumerate(p)]
         end
     end
 end
+solves(::typeof(sat_EightQueensOrFewer)) = sol_EigthQueensOrFewer
 
-function permutation(lst::Array{Int64})
-    if length(lst) == 0
-        return []
-    end
-
-    if length(lst) ==  1
-        return lst
-    end
-
-    l = []
-    for i in 1:length(lst)
-        m = lst[i]
-        remlst = [lst[1:i-1];lst[i+1:length(lst)]]
-        @show remlst
-        for p in permutation(remlst)
-            @show l
-            append!(l, [[m;p]])
-        end
-    end
-    return l
-end
-
-"""
-See Wikipedia entry on [Eight Queens puzzle](https://en.wikipedia.org/w/index.php?title=Eight_queens_puzzle).
-A brute force approach will not work on many of these problems.
-"""
-function sat_MoreQueens(squares::Array{Array{Int64}}, m::Int64=9, n::Int64=9)
-    """
-    Position min(m, n) > 8 queens on an m x n chess board so that no pair is attacking each other.
-    """
+"Position min(m, n) > 8 queens on an m x n chess board so that no pair is attacking each other."
+function sat_MoreQueens(squares::Array{Array{Int64, 1}, 1}, m::Int64=9, n::Int64=9)
     k = min(m,n)
     @assert all([i in 1:m && j in 1:n for (i,j) in squares]) && length(squares) == k
-    @assert length(squares)==k, "Wrong number of Queens"
+    @assert length(squares)==k "Wrong number of Queens"
     @assert length(Set([i for (i,j) in squares])) == k "Queens on same row"
     @assert length(Set([j for (i,j) in squares])) == k "Queens on same file"
     @assert length(Set([i+j for (i,j) in squares])) == k "Queens on same SE Diagonal"
@@ -65,27 +32,34 @@ end
 
 function sol_MoreQueens(m::Int64, n::Int64)
     t = min(m,n)
-    ans = []
+    a = []
     if t%2 == 1 # odd k, put a queen in the lower right corner (and decrement k)
-        append!(ans, [t-1,t-1])
+        a::Vector{Vector{Int64}} = vcat(a, [[t,t]])
         t -= 1
     end
-    if t%6 == 2 # do something special for 8x8, 14x14 etc
-        ans += [[i, (2 * i + Int(round(t / 2)) - 1) % t] for i in range(Int(round(t / 2)))]
-        ans += [[i + Int(round(t / 2)), (2 * i - Int(round(t / 2)) + 2) % t] for i in range(Int(round(t / 2)))]
+    if t % 6 == 2  # do something special for 8x8, 14x14 etc:
+        for i in 1:round(Int64, t / 2)
+            k = (2 * i + round(Int64, t / 2) - 2) % t
+            if k == 0
+                k = 8
+            end
+            a = vcat(a, [[i, k]])
+        end
+        a = vcat(a, [[i, (2 * i - 3) % t] for i in (round(Int64, t / 2) + 1):t])
     else
-        ans += [[i, 2 * i + 1] for i in range(Int(round(t / 2)))]
-        ans += [[i + Int(round(t / 2)), 2 * i] for i in range(Int(round(t / 2)))]
+        a = vcat(a, [[i, 2 * i] for i in 1:round(Int64, t / 2)])
+        a = vcat(a, [[i + round(Int64, t / 2), 2 * i - 1] for i in 1:round(Int64, t / 2)])
     end
-    return ans
+    return a
+end
+solves(::typeof(sat_MoreQueens)) = sol_MoreQueens
+
+function gen_random(::typeof(sat_MoreQueens), rng)
+    [rand(rng, 4 : rand(rng, [10, 100])) for _ in 1:2]
 end
 
-function gen_random_MoreQueens()
-    return
-end
-
-function sat_KnightsTour(tour::Array{Array{Int64}}, m::Int64=8, n::Int64=8)
-    """Find an (open) tour of knight moves on an m x n chess-board that visits each square once."""
+"Find an (open) tour of knight moves on an m x n chess-board that visits each square once."
+function sat_KnightsTour(tour::Array{Array{Int64, 1}, 1}, m::Int64=8, n::Int64=8)
     @assert all([(abs(i1-i2),abs(j1-j2))==(1,2) for ((i1,i2),(j1,j2)) in zip(tour, tour[2:length(tour)])]) "Legal moves"
     return sort(tour) == [[i,j] for i in 1:m for j in 1:n] # cover every square once
 end 
@@ -102,6 +76,7 @@ function minbykey(x;by=identity)
      end
     x[imin]
 end
+
 function sol_KnightsTour(m::Int64, n::Int64)
     # using Warnsdorff's heuristic, breaking ties randomly
     for seed in 1:100
@@ -114,7 +89,7 @@ function sol_KnightsTour(m::Int64, n::Int64)
         end
         
         while true
-            if !free
+            if isempty(free)
                 return [[a,b] for (a,b) in ans]
             end
             candidates = possible(ans[length(ans)][1],ans[length(ans)][2])
@@ -122,7 +97,7 @@ function sol_KnightsTour(m::Int64, n::Int64)
                 break
             end
             f(z) = length(possible(z[1],z[2]))+rand()
-            append!(ans, minbykey(candidates, f))
+            append!(ans, minbykey(candidates, by = f))
             pop!(ans)
         end
     end
