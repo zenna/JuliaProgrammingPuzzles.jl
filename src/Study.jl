@@ -1,312 +1,326 @@
-using Base: Char
-function sat_study1(s::String)
-    """Find a string with 1000 'o's but no two adjacent 'o's."""
-    return count(s,"o") == 1000 && return count(s, "oo") == 0
+# Study 1
+"Find a string with 1000 'o's but no two adjacent 'o's."
+function study_1_sat(s::String)
+  (count("o", s) == 1000) & (count("oo", s) == 0)
 end
 
-function sol_study1()
-    return ("h"*"o") ^ 1000
-end 
+study_1_sol() = ("h" * "o") ^ 1000
+solves(::typeof(study_1_sat)) = study_1_sol
 
-function sat_study2(s::String)
-    """Find a string with 1000 'o's, 100 pairs of adjacent 'o's and 801 copies of 'ho'."""
-    return count(s,"o") == 1000 && count(s,"oo") == 100 && count(s,"ho") == 801
+# study_2
+"Find a string with 1000 'o's, 100 pairs of adjacent 'o's and 801 copies of 'ho'."
+function study_2_sat(s::String)
+  (count("o", s) == 1000) & (count("oo", s) == 100) & (count("ho", s) == 801)
 end
 
-function sol_study2()
-    return "ho" ^ (800 + 1) * "o" ^ (100*2 - 1)
+study_2_sol() = "ho" ^ (800 + 1) * "o" ^ (100 * 2 - 1)
+solves(::typeof(study_2_sat)) = study_1_sol
+
+# study_3
+function study_3_sat(li::Array{Int64,1})
+  (issorted(li) == collect(0:999)) & (all(li[i] != i for i in 0:999))
 end
 
-function sat_study3(li::Array{Int64,1})
-    """Find a permutation of [0, 1, ..., 998] such that the ith element is *not* i, for all i=0, 1, ..., 998."""
-    return sort(li) == 0:999 && all(i != li[i] for i in length(li))
+study_3_sol() = [((i + 1) % 999) for i in 0:999]
+solves(::typeof(study_3_sat)) = study_3_sol
+
+# study 4
+"Find a list of length 10 where the fourth element occurs exactly twice."
+function study_4_sat(li::Array{Int64, 1})
+  (length(li) == 10) & (count(x -> x == li[4], li) == 2)
 end
 
-function sol_study3()
-    return [i for i in 999:-1:0]
+study_4_sol() = repeat(collect(0:4), 2)
+solves(::typeof(study_4_sat)) = study_4_sol
+
+# study 5
+"Find a list integers such that the integer i occurs i times, for i = 0, 1, 2, ..., 9."
+function study_5_sat(li::Array{Int64, 1})
+  all([count(x -> x == i, li) == i for i in 0:9])
 end
 
-function sat_study4(li::Array{Int64,1})
-    """Find a list of length 10 where the fourth element occurs exactly twice."""
-    cnt = [i==li[4] for i in li].*1
-    return sum(cnt)==2
+study_5_sol() = reduce(vcat, Int64[i*ones(Int64, i) for i in 1:9]...)
+solves(::typeof(study_5_sat)) = study_5_sol
+
+# study 6
+"Find an integer greater than 10^10 which is 4 mod 123."
+function study_6_sat(i::Int64)
+  (i % 123 == 4) & (i > 10 ^ 10)
 end
 
-function sol_study4()
-    return vcat([i for i in 0:4],[i for i in 0:4])
+study_6_sol() = 4 + 10 ^ 10 + 123 - 10 ^ 10 % 123
+solves(::typeof(study_6_sat)) = study_6_sol
+
+# study 7
+"Find a three-digit pattern  that occurs more than 8 times in the decimal representation of 8^2888."
+function study_7_sat(s::String)
+    (count(s, string(8 ^ BigInt(2888))) > 8) & (length(s) == 3)
 end
 
-function sat_study5(li::Array{Int64,1})
-    """Find a list integers such that the integer i occurs i times, for i = 0, 1, 2, ..., 9."""
-    counts = countmap(li)
-    return all(counts[i] == i for i in 1:9)
+function study_7_sol()
+    s = string(8^BigInt(2888))
+    t = unique([s[i : i + 2] for i in 1:(length(s) - 2)])
+    max(count.(t, s)...)
+end
+solves(::typeof(study_7_sat)) = study_7_sol
+
+# study 8
+"Find a list of more than 1235 strings such that the 1234th string is a proper substring of the 1235th."
+function study_8_sat(ls::Array{String, 1})
+    (occursin(ls[1234], ls[1235])) & (ls[1234] != ls[1235])
 end
 
-function sol_study5()
-    return [i for i in 0:9 for j in 0:(i-1)]
+study_8_sol() = vcat(repeat([""], 1234),  ["a"])
+solves(::typeof(study_8_sat)) = study_8_sol
+
+# study 9
+"""
+ Find a way to rearrange the letters in the pangram "The quick brown fox jumps over the lazy dog" to get
+ the pangram "The five boxing wizards jump quickly". The answer should be represented as a list of index
+ mappings.
+"""
+function study_9_sat(li::Array{Int64, 1})
+    ["The quick brown fox jumps over the lazy dog"[i] for i in li] ==
+            [i for i in "The five boxing wizards jump quickly"]
 end
 
-function sat_study6(i::Int64)
-    return i%123==4 && i>10^10
+study_9_sol() = Int64[findfirst(t, "The quick brown fox jumps over the lazy dog")
+    for t in "The five boxing wizards jump quickly"]
+solves(::typeof(study_9_sat)) = study_9_sol
+
+# study 10
+"Find a palindrome of length greater than 11 in the decimal representation of 8^1818."
+function study_10_sat(s::String)
+    (s in string(8 ^ BigInt(1818))) & (s == s[1 : end - 1]) & (length(s) > 11)
 end
 
-function sol_study6()
-    return 4 + 10^10 + 123 - (10^10)%123
+# function study_10_sol()
+#     s = 8 ^ BigInt(1818)
+#     for l in 12:length(s)
+#         for i in 1:(length(s) - l)
+#             if s[i: i + l] == reverse(s[i: i + l])
+#                 return s[i: i + l]
+#             end
+#         end
+#     end
+# end
+# solves(::typeof(study_10_sat)) = study_10_sol
+
+# study 11
+"""
+ Find a list of strings whose length (viewed as a string) is equal to the lexicographically largest element
+ and is equal to the lexicographically smallest element.
+"""
+# function study_11_sat(ls::Array{String, 1})
+#     min(split(ls, "")) == max(split(ls, "")) == string(length(ls))
+# end
+
+study_11_sol() = ["1"]
+# solves(::typeof(study_11_sat)) = study_11_sol
+
+# study 12
+"""
+ Find a list of 1,000 integers where every two adjacent integers sum to 9, 
+ and where the first integer plus 4 is 9.
+"""
+function study_12_sat(li::Array{Int64, 1})
+    all(li[i] + li[i+1] == 9 for i in 1:length(li)) & (li[1] == 5) & (length(li) == 1000)
 end
 
-function sat_study7(s::String)
-    """Find a three-digit pattern  that occurs more than 8 times in the decimal representation of 8^2888."""
-    return count(string(BigInt(8)^2888), s) > 8 && length(s) == 3
+study_12_sol() = reduce(vcat, repeat([9 - 4, 4], 500))
+solves(::typeof(study_12_sat)) = study_12_sol
+
+# study 13
+"Find a real number which, when you subtract 3.1415, has a decimal representation starting with 123.456."
+function study_13_sat(x::Float64)
+    string(x - 3.1415)[1:7] == "123.456"
 end
 
-function sol_study7()
-    s = string(BigInt(8)^2888)
-    return last(sort!([s[i:i+2] for i in 1:(length(s)-2)], by = x -> count(s,x)))
+study_13_sol() = 123.456 + 3.1415
+solves(::typeof(study_13_sat)) = study_13_sol
+
+# study 14
+"Find a list of integers such that the sum of the first i integers is i, for i=0, 1, 2, ..., 19."
+function study_14_sat(li::Array{Int64, 1})
+    all([sum(li[1:i]) == i for i in 0:19])
 end
 
-function sat_study8(ls::Array{String, 1})
-    """Find a list of more than 1235 strings such that the 1234th string is a proper substring of the 1235th."""
-    return occursin(ls[1234], ls[1235]) && ls[1235]!=ls[1234]
+study_14_sol() = ones(Int64, 20)
+solves(::typeof(study_14_sat)) = study_14_sol
+
+# study 15
+"Find a list of integers such that the sum of the first i integers is 2^i -1, for i = 0, 1, 2, ..., 19."
+function study_15_sat(li::Array{Int64, 1})
+    all(sum(li[1:i]) == 2 ^ i - 1 for i in 0:19)
 end
 
-function sol_study8()
-    return append!(repeat([""],1234),["a"])
+study_15_sol() = Int64[(2 ^ i) for i in 0:19]
+solves(::typeof(study_15_sat)) = study_15_sol
+
+# study 16
+"""
+ Find a real number such that when you add the length of its decimal representation to it, you get 4.5.
+ Your answer should be the string form of the number in its decimal representation.
+"""
+function study_16_sat(s::String)
+    parse(Float64, s) + length(s) == 4.5
 end
 
-function sat_study9(li::Array{Int64,1})
-    """
-        Find a way to rearrange the letters in the pangram "The quick brown fox jumps over the lazy dog" to get
-        the pangram "The five boxing wizards jump quickly". The answer should be represented as a list of index
-        mappings.
-        """
-    return String(["The quick brown fox jumps over the lazy dog"[i] for i in li]) == "The five boxing wizards jump quickly"
+study_16_sol() = string(4.5 - length(string(4.5)))
+solves(::typeof(study_16_sat)) = study_16_sol
+
+# study 17
+"""
+ Find a number whose decimal representation is *a longer string* when you add 1,000 to it than 
+ when you add 1,001.
+"""
+function study_17_sat(i::Int64)
+    length(string(i + 1000)) > length(string(i + 1001))
 end
 
-function sol_study9()
-    return [findfirst(t, "The quick brown fox jumps over the lazy dog") for t in "The five boxing wizards jump quickly"]
+study_17_sol() = -1001
+solves(::typeof(study_17_sat)) = study_17_sol
+
+# study 18
+"""
+ Find a list of strings that when you combine them in all pairwise combinations gives the six strings:
+ 'berlin', 'berger', 'linber', 'linger', 'gerber', 'gerlin'
+"""
+function study_18_sat(ls::Array{String, 1})
+    [s * t for s in ls for t in ls if s != t] == ["berlin", "berger", "linber", "linger", "gerber", "gerlin"]
 end
 
-function sat_study10(ls::Array{String})
-    """
-        Find a list of strings whose length (viewed as a string) is equal to the lexicographically largest element
-        and is equal to the lexicographically smallest element.
-        """
-    return maximum(ls) == minimum(ls) == string(length(ls))
-end
-
-function sol_study10()
-    return ["1"]
-end
-
-function sat_study11(li::Array{Int64})
-    """Find a list of 1,000 integers where every two adjacent integers sum to 9, and where the first
-    integer plus 4 is 9."""
-   li_2 = copy(li)
-   return all([(i + j) == 9 for (i, j) in zip(pushfirst!(li_2,4),li[1:length(li)])]) && length(li) == 1000
-end
-
-function sol_study11()
-    return repeat([9 - 4, 4],500)
-end
-
-function sat_study12(x::Float64)
-    """Find a real number which, when you subtract 3.1415, has a decimal representation starting with 123.456."""
-    return string(x - 3.1415).startswith("123.456")
-end
-
-function sol_study12()
-    return 123.456 + 3.1415
-end
-
-function sat_study13(li::Array{Int64})
-    """Find a list of integers such that the sum of the first i integers is i, for i=0, 1, 2, ..., 19."""
-    return all([sum(li[1:i]) == i for i in 1:20])
-end
-
-function sol_study13()
-    return repeat([1],20)
-end
-
-function sat_study14(li::Array{Int64})
-    """Find a list of integers such that the sum of the first i integers is 2^i -1, for i = 0, 1, 2, ..., 19."""
-    return all([sum(li[0:i] == (2^i)-1) for i in 1:20])
-end
-
-function sol_study14()
-    return [(2^i) for i in 1:20]
-end
-
-function sat_study15(s::String)
-    """Find a real number such that when you add the length of its decimal representation to it, you get 4.5.
-    Your answer should be the string form of the number in its decimal representation."""
-    return parse(Float64,s) + length(s) == 4.5
-end
-
-function sol_study15()
-    return string(4.5 - length(string(4.5)))
-end
-
-function sat_study16(i::Int64)
-    """Find a number whose decimal representation is *a longer string* when you add 1,000 to it than when you add 1,001."""
-    return length(string(i+1000)) > length(string(i+1001))
-end
-
-function sol_study16()
-    return -1001
-end
-
-function sat_study17(ls::Array{Any,1})
-    """
-        Find a list of strings that when you combine them in all pairwise combinations gives the six strings:
-        'berlin', 'berger', 'linber', 'linger', 'gerber', 'gerlin'
-        """
-    return [s*t for s in ls for t in ls if s != t] == split("berlin berger linber linger gerber gerlin"," ")
-end
-
-function sol_study17()
-    seen = Set()
-    ans = []
-    for s in split("berlin berger linber linger gerber gerlin"," ")
-        t = s[1:3]
-        if ~(t in seen)
-            @show ans
-            append!(ans,[t])
-            push!(seen, t)
+function study_18_sol()
+    seen = []
+    ans = String[]
+    for s in split("berlin berger linber linger gerber gerlin")
+        t = string(s[1:3])
+        if !(t in seen)
+            push!(ans, t)
+            seen = unique(vcat(seen, t))
         end
     end
     return ans
 end
+solves(::typeof(study_18_sat)) = study_18_sol
 
-function sat_study18(li::Array{Int64})
-    """
-        Find a list of integers whose pairwise sums make the set {0, 1, 2, 3, 4, 5, 6, 17, 18, 19, 20, 34}.
-        That is find L such that, { i + j | i, j in L } = {0, 1, 2, 3, 4, 5, 6, 17, 18, 19, 20, 34}.
-        """
-    set1 = Set()
-    set2 = Set([0, 1, 2, 3, 4, 5, 6, 17, 18, 19, 20, 34])
-    for i in li
-        for j in li
-            push!(set1,i+j)
-        end
-    end
-    return issetequal(set1, set2)
+"""
+    Find a list of integers whose pairwise sums make the set {0, 1, 2, 3, 4, 5, 6, 17, 18, 19, 20, 34}.
+    That is find L such that, { i + j | i, j in L } = {0, 1, 2, 3, 4, 5, 6, 17, 18, 19, 20, 34}.
+"""
+function study_19_sat(li::Array{Int64, 1})
+    Set([i + j for i in li for j in li]) == Set([0, 1, 2, 3, 4, 5, 6, 17, 18, 19, 20, 34])
 end
-
-function sol_study18()
-    return [0, 1, 2, 3, 17]
-end
-
-function sat_study19(li::Array{Int64})
-    """
+study_19_sol() = [0, 1, 2, 3, 17]
+solves(::typeof(study_19_sat)) = study_19_sol
+"""
     Find a list of integers, starting with 0 and ending with 128, such that each integer either differs from
     the previous one by one or is thrice the previous one.
-    """
+"""
+function sat_study20(li::Array{Int64, 1})
     li_2 = copy(li)
     li_3 = copy(li)
     return all(j in [i - 1, i + 1, 3 * i] for (i,j) in zip(pushfirst!(li_2, 0), push!(li_3,128)))
 end
 
-function sol_study19()
-    return [1, 3, 4, 12, 13, 14, 42, 126, 127]
-end
+sol_study20() = Int64[1, 3, 4, 12, 13, 14, 42, 126, 127]
+solves(::typeof(sat_study20)) = sol_study20
 
-function sat_study20(li::Array{Int64})
-    """
+"""
     Find a list integers containing exactly three distinct values, such that no integer repeats
     twice consecutively among the first eleven entries. (So the list needs to have length greater than ten.)
-    """
+"""
+function sat_study21(li::Array{Int64, 1})
     return all([li[i] != li[i + 1] for i in 1:10]) && length(Set(li)) == 3
 end
 
-function sol_study20()
-    return repeat([0,1,2],10)
-end
+sol_study21() = repeat([0,1,2],10)
+solves(::typeof(sat_study21)) = sol_study21
 
-function sat_study21(s::String)
-    """
+"""
     Find a string s containing exactly five distinct characters which also contains as a substring every other
     character of s (e.g., if the string s were 'parrotfish' every other character would be 'profs').
-    """
+"""
+function sat_study22(s::String)
     return occursin(s[1:2:length(s)],s) && length(Set(s)) == 5
 end
 
-function sol_study21()
-    return "abacadaeaaaaaaaaaa"
-end
+sol_study22() = "abacadaeaaaaaaaaaa"
+solves(::typeof(sat_study21)) = sol_study21
 
-function sat_study22(ls::Tuple{Char, Char, Char})
-    """
+"""
     Find a list of characters which are aligned at the same indices of the three strings 'dee', 'doo', and 'dah!'.
-    """
-    return ls in zip("dee", "doo", "dah!")
+"""
+function sat_study23(ls::Array{Char, 1})
+    return tuple(ls...) in zip("dee", "doo", "dah!")
 end
 
-function sol_study22()
-    """Needs to be filled in with logic hardcoded it for now"""
-    return ('d', 'd', 'd')
+sol_study23() = ['d', 'd', 'd']
+solves(::typeof(sat_study23)) = sol_study23
+
+"""Find a list of integers with exactly three occurrences of seventeen and at least two occurrences of three."""
+function sat_study24(li::Array{Int64, 1})
+    return count(x -> x == 17, li) == 3 && count(x -> x == 3, li) >=2
 end
 
-function sat_study23(li::Array{Int64})
-    """Find a list of integers with exactly three occurrences of seventeen and at least two occurrences of three."""
-    return count(li, 17) == 3 && count(li,3) >=2
+function sol_study24()
+    return vcat(repeat([17],3),repeat([3],2))
 end
+solves(::typeof(sat_study24)) = sol_study24
 
-function sol_study23()
-    return append!(repeat([17],3),repeat([3],2))
-end
-
-function sat_study25(ls::Array{String})
-    """Divide the decimal representation of 8^88 up into strings of length eight."""
+"Divide the decimal representation of 8^88 up into strings of length eight."
+function sat_study25(ls::Array{String, 1})
     return join(ls) == string(BigInt(8)^88) && all([length(s)==8 for s in ls])
 end
 
 function sol_study25()
     return [string(BigInt(8)^88)[i:i+7] for i in 1:8:length(string(BigInt(8)^88))]
 end
+solves(::typeof(sat_study25)) = sol_study25
 
-function sat_study26(li::Array{Int64})
-    """
-        Consider a digraph where each node has exactly one outgoing edge. For each edge (u, v), call u the parent and
-        v the child. Then find such a digraph where the grandchildren of the first and second nodes differ but they
-        share the same great-grandchildren. Represented this digraph by the list of children indices.
-        """
-    return li[li[0]] != li[li[1]] && li[li[li[0]]] == li[li[li[1]]]
+"""
+    Consider a digraph where each node has exactly one outgoing edge. For each edge (u, v), call u the parent and
+    v the child. Then find such a digraph where the grandchildren of the first and second nodes differ but they
+    share the same great-grandchildren. Represented this digraph by the list of children indices.
+"""
+function sat_study26(li::Array{Int64, 1})
+    (li[li[1]] != li[li[2]]) && (li[li[li[1]]] == li[li[li[2]]])
 end
 
-function sol_study26()
-    return [1, 2, 3, 3]
+sol_study26() = [2, 3, 4, 4]
+solves(::typeof(sat_study26)) = sol_study26
+
+"Find a list of one hundred integers between 0 and 999 which all differ by at least ten from one another."
+function sat_study27(li::Array{Int64, 1})
+   return all([(i in 0:999) && (abs(i - j) >= 10) for i in li for j in li if i != j]) && length(Set(li)) == 100
 end
 
-function sat_study27(li::Array{Int64})
-    """Find a list of one hundred integers between 0 and 999 which all differ by at least ten from one another."""
-   return all(i in 1:1000 && abs(i - j) >= 10 for i in li for j in li if i != j) && length(Set(li)) == 100
-end
+sol_study27() = collect(0:10:999)
+solves(::typeof(sat_study27)) = sol_study27
 
-function sol_study27()
-    return [0:10:1000]
-end
-
-function sat_study28(l::Array{Int64})
-    """
+"""
     Find a list of more than 995 distinct integers between 0 and 999, inclusive, such that each pair of integers
     have squares that differ by at least 10.
-    """
+"""
+function sat_study28(l::Array{Int64, 1})
     return all(i in 0:1000 && abs(i * i - j * j) >= 10 for i in l for j in l if i != j) && length(Set(l)) > 995
 end
 
 function sol_study28()
-    return append!([0,4],[i for i in 6:1000])
+    return vcat([0,4],[i for i in 6:1000])
 end
+solves(::typeof(sat_study28)) = sol_study28
 
-function sat_study29(li::Array{Int64})
-	"""
-        Define f(n) to be the residue of 123 times n mod 1000. Find a list of integers such that the first twenty one
-        are between 0 and 999, inclusive, and are strictly increasing in terms of f(n).
-        """
+"""
+    Define f(n) to be the residue of 123 times n mod 1000. Find a list of integers such that the first twenty one
+    are between 0 and 999, inclusive, and are strictly increasing in terms of f(n).
+"""
+function sat_study29(li::Array{Int64, 1})
 	return all([123 * li[i] % 1000 < 123 * li[i + 1] % 1000 && li[i] in 1:1000 for i in 1:20])
 end
 
 function sol_study29()
     y = [123*n%1000 for n in 1:1000]
-    return [x for (_,x) in sorted(zip(y, 1:1000))]
+    sortperm(y)
 end
+solves(::typeof(sat_study29)) = sol_study29
