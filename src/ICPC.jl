@@ -151,13 +151,13 @@ function gen_random(::typeof(sat_OptimalBridges), rng)
             append!(xs, x)
             c = (keys[i + 1] + keys[i]) / 2
             r = (keys[i + 1] - keys[i]) / 2
-            y = self.random.rand(0, int(H - r + (r ** 2 - (x - c) ** 2) ** 0.5))
+            y = self.random.rand(0, int(H - r + (r ^ 2 - (x - c) ^ 2) ^ 0.5))
             ys.append(y)
         end
     end
     indices = OptimalBridges.sol(H, alpha, beta, xs, ys, None)  # compute min-cost, thresh is ignored
     cost = alpha * (H - ys[0])
-    for i, j in zip(indices, indices[1:]):
+    for (i, j) in zip(indices, indices[2:end])
         a, b, r = xs[i], xs[j], (xs[j] - xs[i]) / 2
         @assert max(ys[i], ys[j]) + r <= H "Bridge too tall"
         @assert all(ys[k] <= H - r + ((b - xs[k]) * (xs[k] - a)) ** 0.5 for k in range(i + 1, j)) "Bridge too short"
